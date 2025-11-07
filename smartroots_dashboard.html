@@ -1,0 +1,1003 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartRoots BioSensor - Dashboard</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Estilos personalizados y configuración de Tailwind -->
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #111827; /* bg-gray-900 */
+            color: #d1d5db; /* text-gray-300 */
+        }
+        
+        /* Configuración de tema oscuro para Tailwind */
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        gray: {
+                            900: '#111827',
+                            800: '#1F2937',
+                            700: '#374151',
+                        },
+                        emerald: {
+                            400: '#34d399',
+                            500: '#10b981',
+                            600: '#059669',
+                        }
+                    }
+                }
+            }
+        }
+
+        /* Clases para el estado de salud */
+        .health-green { background-color: rgba(16, 185, 129, 0.7); border: 1px solid #10b981; }
+        .health-yellow { background-color: rgba(245, 158, 11, 0.7); border: 1px solid #f59e0b; }
+        .health-red { background-color: rgba(239, 68, 68, 0.7); border: 1px solid #ef4444; }
+        .health-green-text { color: #34d399; }
+        .health-yellow-text { color: #f59e0b; }
+        .health-red-text { color: #ef4444; }
+
+        /* Ocultar secciones por defecto */
+        .main-section {
+            display: none;
+        }
+        #overview-section {
+            display: block;
+        }
+        
+        /* Estilo para los sliders */
+        input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            height: 8px;
+            background: #374151; /* bg-gray-700 */
+            border-radius: 9999px;
+            outline: none;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background: #34d399; /* emerald-400 */
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            background: #34d399; /* emerald-400 */
+            border-radius: 50%;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body class="flex h-screen">
+
+    <!-- ===== Barra Lateral de Navegación ===== -->
+    <aside class="w-64 bg-gray-900 shadow-lg hidden md:block" style="background-color: #0f172a;">
+        <div class="p-6">
+            <h1 class="text-2xl font-bold text-white">
+                <span class="text-emerald-400">Smart</span>Roots
+            </h1>
+        </div>
+        <nav class="mt-6">
+            <a href="#" class="nav-link active-link flex items-center px-6 py-4 text-gray-100 bg-gray-800" data-target="overview-section">
+                <svg class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
+                Visión General
+            </a>
+            <a href="#" class="nav-link flex items-center px-6 py-4 text-gray-400 hover:bg-gray-800" data-target="alerts-section">
+                <svg class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341A6.002 6.002 0 006 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+                Alertas y Acciones
+            </a>
+            <a href="#" class="nav-link flex items-center px-6 py-4 text-gray-400 hover:bg-gray-800" data-target="simulation-section">
+                <svg class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                Insights y Simulación
+            </a>
+        </nav>
+        <div class="absolute bottom-0 left-0 w-64 p-4">
+            <div class="flex items-center p-2 bg-gray-800 rounded-lg">
+                <img class="w-10 h-10 rounded-full" src="https://placehold.co/40x40/34d399/111827?text=A" alt="Avatar de Agricultor">
+                <div class="ml-3">
+                    <p class="text-sm font-medium text-white">Ana R.</p>
+                    <p class="text-xs text-gray-400">Finca "La Esperanza"</p>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- ===== Contenido Principal ===== -->
+    <main class="flex-1 overflow-y-auto bg-gray-900">
+        <!-- Encabezado (para móvil) -->
+        <header class="md:hidden flex items-center justify-between p-4 bg-gray-800 shadow-md">
+            <h1 class="text-xl font-bold text-white"><span class="text-emerald-400">Smart</span>Roots</h1>
+            <button id="mobile-menu-btn" class="text-gray-300">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+            </button>
+        </header>
+        
+        <!-- =================================== -->
+        <!-- ===== SECCIÓN 1: VISIÓN GENERAL ===== -->
+        <!-- =================================== -->
+        <section id="overview-section" class="main-section p-6">
+            <h2 class="text-3xl font-bold text-white mb-6">Visión General de la Finca</h2>
+
+            <!-- KPIs Globales -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+                <!-- KPI: Índice de Estrés Radicular -->
+                <div class="bg-gray-800 p-6 rounded-2xl shadow-lg">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-gray-400">Índice Estrés Radicular</p>
+                            <p id="kpi-stress" class="text-4xl font-bold text-amber-400">22</p>
+                        </div>
+                        <div class="relative w-20 h-20">
+                            <svg class="w-full h-full" viewBox="0 0 36 36">
+                                <path class="text-gray-700" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke-width="3"></path>
+                                <path id="kpi-stress-ring" class="text-amber-400" stroke-width="3" stroke-dasharray="22, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke-linecap="round"></path>
+                            </svg>
+                            <div class="absolute inset-0 flex items-center justify-center text-amber-400 text-lg font-semibold">22%</div>
+                        </div>
+                    </div>
+                </div>
+                <!-- KPI: Predicción de Rendimiento -->
+                <div class="bg-gray-800 p-6 rounded-2xl shadow-lg">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-gray-400">Predicción Rendimiento</p>
+                            <p id="kpi-yield" class="text-4xl font-bold text-emerald-400">92%</p>
+                        </div>
+                         <div class="relative w-20 h-20">
+                            <svg class="w-full h-full" viewBox="0 0 36 36">
+                                <path class="text-gray-700" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke-width="3"></path>
+                                <path id="kpi-yield-ring" class="text-emerald-400" stroke-width="3" stroke-dasharray="92, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke-linecap="round"></path>
+                            </svg>
+                            <div class="absolute inset-0 flex items-center justify-center text-emerald-400 text-lg font-semibold">92%</div>
+                        </div>
+                    </div>
+                </div>
+                <!-- KPI: Ahorro de Insumos -->
+                <div class="bg-gray-800 p-6 rounded-2xl shadow-lg">
+                    <p class="text-sm font-medium text-gray-400">Ahorro Insumos (Mes)</p>
+                    <p id="kpi-savings" class="text-4xl font-bold text-white mt-2">€ 1,240</p>
+                    <p class="text-sm text-emerald-400 mt-1">+15% vs. mes anterior</p>
+                </div>
+                <!-- KPI: Alertas Activas -->
+                <div class="bg-gray-800 p-6 rounded-2xl shadow-lg">
+                    <p class="text-sm font-medium text-gray-400">Zonas con Alertas</p>
+                    <p id="kpi-alerts" class="text-4xl font-bold text-red-500 mt-2">2</p>
+                    <p class="text-sm text-gray-400 mt-1">1 Crítica, 1 Moderada</p>
+                </div>
+            </div>
+
+            <!-- Mapa y Tendencias -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Mapa Interactivo de Parcelas -->
+                <div class="lg:col-span-2 bg-gray-800 p-6 rounded-2xl shadow-lg">
+                    <h3 class="text-xl font-semibold text-white mb-4">Mapa de Zonas de Sensores</h3>
+                    <div class="aspect-w-16 aspect-h-9 bg-gray-700 rounded-lg p-4">
+                        <div class="grid grid-cols-4 grid-rows-3 gap-2 h-full">
+                            <!-- Fila 1 -->
+                            <div class="map-zone health-green rounded-lg flex items-center justify-center font-bold text-white cursor-pointer hover:opacity-80 transition-opacity" data-zone-id="1">Z-1</div>
+                            <div class="rounded-lg"></div>
+                            <div class="map-zone health-green rounded-lg flex items-center justify-center font-bold text-white cursor-pointer hover:opacity-80 transition-opacity" data-zone-id="2">Z-2</div>
+                            <div class="map-zone health-yellow rounded-lg flex items-center justify-center font-bold text-white cursor-pointer hover:opacity-80 transition-opacity" data-zone-id="3">Z-3</div>
+                            <!-- Fila 2 -->
+                            <div class="map-zone health-green rounded-lg flex items-center justify-center font-bold text-white cursor-pointer hover:opacity-80 transition-opacity" data-zone-id="4">Z-4</div>
+                            <div class="map-zone health-green rounded-lg flex items-center justify-center font-bold text-white cursor-pointer hover:opacity-80 transition-opacity" data-zone-id="5">Z-5</div>
+                            <div class="rounded-lg"></div>
+                            <div class="map-zone health-red rounded-lg flex items-center justify-center font-bold text-white cursor-pointer hover:opacity-80 transition-opacity" data-zone-id="6">Z-6</div>
+                            <!-- Fila 3 -->
+                            <div class="rounded-lg"></div>
+                            <div class="map-zone health-green rounded-lg flex items-center justify-center font-bold text-white cursor-pointer hover:opacity-80 transition-opacity" data-zone-id="7">Z-7</div>
+                            <div class="rounded-lg"></div>
+                            <div class="map-zone health-green rounded-lg flex items-center justify-center font-bold text-white cursor-pointer hover:opacity-80 transition-opacity" data-zone-id="8">Z-8</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Panel Lateral de Resumen de Zona -->
+                <div class="bg-gray-800 p-6 rounded-2xl shadow-lg">
+                    <div id="zone-detail-panel" class="h-full">
+                        <h3 id="zone-panel-title" class="text-xl font-semibold text-white mb-4">Seleccione una Zona</h3>
+                        <div id="zone-panel-content" class="hidden">
+                            <p class="text-sm text-gray-400 mb-1">Cultivo: <span id="zone-panel-crop" class="font-medium text-gray-200"></span></p>
+                            <p class="text-sm text-gray-400 mb-4">Siembra: <span id="zone-panel-date" class="font-medium text-gray-200"></span></p>
+                            
+                            <h4 class="text-lg font-semibold text-white mb-2">KPIs de Zona</h4>
+                            <div class="space-y-3">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-gray-300">Estrés Radicular</span>
+                                    <span id="zone-panel-stress" class="text-lg font-bold"></span>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-gray-300">Humedad (VWC)</span>
+                                    <span id="zone-panel-moisture" class="text-lg font-bold"></span>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-gray-300">Nivel pH</span>
+                                    <span id="zone-panel-ph" class="text-lg font-bold"></span>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-gray-300">Riesgo Fusarium</span>
+                                    <span id="zone-panel-fungus" class="text-lg font-bold"></span>
+                                </div>
+                            </div>
+
+                            <button id="zone-drilldown-btn" class="mt-6 w-full bg-emerald-500 text-white font-semibold py-3 rounded-lg hover:bg-emerald-600 transition-colors">
+                                Ver Análisis Detallado
+                            </button>
+                        </div>
+                        <div id="zone-panel-placeholder" class="flex items-center justify-center h-4/5">
+                            <p class="text-gray-500 text-center">Haga clic en una zona del mapa para ver un resumen.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Gráfico de Tendencias Globales -->
+            <div class="mt-6 bg-gray-800 p-6 rounded-2xl shadow-lg">
+                <h3 class="text-xl font-semibold text-white mb-4">Tendencia Global: Estrés Radicular (Últimos 30 días)</h3>
+                <div class="h-64">
+                    <canvas id="globalTrendChart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============================================= -->
+        <!-- ===== SECCIÓN 2: ALERTAS Y RECOMENDACIONES ===== -->
+        <!-- ============================================= -->
+        <section id="alerts-section" class="main-section p-6">
+            <h2 class="text-3xl font-bold text-white mb-6">Alertas y Recomendaciones</h2>
+            
+            <div class="space-y-4">
+                <!-- Alerta Crítica -->
+                <div class="bg-gray-800 rounded-2xl shadow-lg overflow-hidden border-l-4 border-red-500">
+                    <div class="p-4 flex items-center justify-between cursor-pointer" onclick="this.nextElementSibling.classList.toggle('hidden')">
+                        <div class="flex items-center">
+                            <svg class="w-8 h-8 text-red-500 mr-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                            <div>
+                                <p class="text-lg font-semibold text-white">Riesgo Crítico: Posible Fusarium</p>
+                                <p class="text-sm text-gray-400">Ubicación: Zona 6 | Predicción: <span class="font-medium text-red-400">en 3-5 días</span></p>
+                            </div>
+                        </div>
+                        <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </div>
+                    <div class="hidden p-6 bg-gray-900 border-t border-gray-700">
+                        <h4 class="text-md font-semibold text-emerald-400 mb-2">Acción Recomendada</h4>
+                        <p class="text-gray-300 mb-3">Aplicar biofungicida (ej. <em class="italic">Bacillus subtilis</em>) en 48h. Aumentar aireación del suelo.</p>
+                        <h4 class="text-md font-semibold text-white mb-2">Explicación del Problema</h4>
+                        <p class="text-gray-300 mb-3">El biosensor detecta marcadores moleculares de <em class="italic">Fusarium oxysporum</em>. Los niveles de ORP indican condiciones anaeróbicas (-50mV) y la humedad es alta (45% VWC), favoreciendo la proliferación.</p>
+                        <h4 class="text-md font-semibold text-white mb-2">Impacto Potencial</h4>
+                        <p class="text-gray-300">Marchitamiento vascular, reducción drástica del rendimiento (hasta 40%) si no se trata.</p>
+                    </div>
+                </div>
+
+                <!-- Alerta Moderada -->
+                <div class="bg-gray-800 rounded-2xl shadow-lg overflow-hidden border-l-4 border-amber-400">
+                    <div class="p-4 flex items-center justify-between cursor-pointer" onclick="this.nextElementSibling.classList.toggle('hidden')">
+                        <div class="flex items-center">
+                            <svg class="w-8 h-8 text-amber-400 mr-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            <div>
+                                <p class="text-lg font-semibold text-white">Estrés Hídrico Inminente</p>
+                                <p class="text-sm text-gray-400">Ubicación: Zona 3 | Predicción: <span class="font-medium text-amber-400">en 24-48 horas</span></p>
+                            </div>
+                        </div>
+                        <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </div>
+                    <div class="hidden p-6 bg-gray-900 border-t border-gray-700">
+                        <h4 class="text-md font-semibold text-emerald-400 mb-2">Acción Recomendada</h4>
+                        <p class="text-gray-300 mb-3">Aumentar el próximo ciclo de riego en un 15% (aprox. 2 horas adicionales).</p>
+                        <h4 class="text-md font-semibold text-white mb-2">Explicación del Problema</h4>
+                        <p class="text-gray-300 mb-3">La humedad profunda (VWC) ha caído a 18%, por debajo del umbral óptimo de 22%. El modelo predice que alcanzará el punto de estrés (15%) en 24h si no se corrige.</p>
+                        <h4 class="text-md font-semibold text-white mb-2">Impacto Potencial</h4>
+                        <p class="text-gray-300">Reducción de la fotosíntesis, menor absorción de nutrientes y disminución del crecimiento del fruto.</p>
+                    </div>
+                </div>
+                
+                <!-- Alerta Pasada (Resuelta) -->
+                <div class="bg-gray-800 rounded-2xl shadow-lg overflow-hidden border-l-4 border-gray-500 opacity-70">
+                    <div class="p-4 flex items-center justify-between">
+                        <div class="flex items-center">
+                            <svg class="w-8 h-8 text-gray-500 mr-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            <div>
+                                <p class="text-lg font-semibold text-gray-400">RESUELTO: Deficiencia de Nitrógeno</p>
+                                <p class="text-sm text-gray-500">Ubicación: Zona 1 | Fecha: Hace 3 días</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+        
+        <!-- ======================================== -->
+        <!-- ===== SECCIÓN 3: INSIGHTS Y SIMULACIÓN ===== -->
+        <!-- ======================================== -->
+        <section id="simulation-section" class="main-section p-6">
+            <h2 class="text-3xl font-bold text-white mb-6">Insights y Simulación de Escenarios</h2>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Panel de Simulación -->
+                <div class="lg:col-span-1 bg-gray-800 p-6 rounded-2xl shadow-lg">
+                    <h3 class="text-xl font-semibold text-white mb-4">Simulador de Escenarios</h3>
+                    
+                    <div class="mb-4">
+                        <label for="sim-zone" class="block text-sm font-medium text-gray-300 mb-2">Seleccionar Zona</label>
+                        <select id="sim-zone" class="w-full bg-gray-700 text-white border-gray-600 rounded-lg py-2 px-3 focus:ring-emerald-500 focus:border-emerald-500">
+                            <option value="3">Zona 3 (Estrés Hídrico)</option>
+                            <option value="6">Zona 6 (Riesgo Fusarium)</option>
+                            <option value="1">Zona 1 (Óptima)</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-6">
+                        <label for="sim-irrigation" class="block text-sm font-medium text-gray-300 mb-2">Simular Riego (% cambio)</label>
+                        <div class="flex items-center space-x-3">
+                            <span class="text-sm text-gray-400">-50%</span>
+                            <input type="range" id="sim-irrigation" min="-50" max="50" value="0" class="w-full">
+                            <span class="text-sm text-gray-400">+50%</span>
+                        </div>
+                        <p class="text-center text-lg font-semibold text-emerald-400 mt-2"><span id="sim-irrigation-value">0</span>%</p>
+                    </div>
+
+                    <div class="mb-6">
+                        <label for="sim-fertilizer" class="block text-sm font-medium text-gray-300 mb-2">Simular Fertilizante (N) (% cambio)</label>
+                        <div class="flex items-center space-x-3">
+                            <span class="text-sm text-gray-400">-50%</span>
+                            <input type="range" id="sim-fertilizer" min="-50" max="50" value="0" class="w-full">
+                            <span class="text-sm text-gray-400">+50%</span>
+                        </div>
+                        <p class="text-center text-lg font-semibold text-emerald-400 mt-2"><span id="sim-fertilizer-value">0</span>%</p>
+                    </div>
+
+                    <button id="run-simulation-btn" class="w-full bg-emerald-500 text-white font-bold py-3 rounded-lg hover:bg-emerald-600 transition-colors">
+                        Ejecutar Simulación
+                    </button>
+                </div>
+
+                <!-- Resultados de Simulación -->
+                <div class="lg:col-span-2 bg-gray-800 p-6 rounded-2xl shadow-lg">
+                    <h3 class="text-xl font-semibold text-white mb-4">Impacto Predicho por la IA</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                        <!-- Situación Actual -->
+                        <div class="bg-gray-700 p-4 rounded-lg border border-gray-600">
+                            <h4 class="text-lg font-semibold text-gray-300 mb-3 text-center">Situación Actual</h4>
+                            <div class="text-center">
+                                <p class="text-sm text-gray-400">Índice de Estrés</p>
+                                <p id="sim-current-stress" class="text-3xl font-bold text-amber-400">22</p>
+                            </div>
+                            <div class="text-center mt-3">
+                                <p class="text-sm text-gray-400">Predicción Rendimiento</p>
+                                <p id="sim-current-yield" class="text-3xl font-bold text-emerald-400">92%</p>
+                            </div>
+                        </div>
+                        <!-- Situación Simulada -->
+                        <div class="bg-gray-700 p-4 rounded-lg border border-emerald-500 shadow-lg">
+                            <h4 class="text-lg font-semibold text-emerald-400 mb-3 text-center">Situación Simulada</h4>
+                            <div class="text-center">
+                                <p class="text-sm text-gray-400">Índice de Estrés</p>
+                                <p id="sim-predicted-stress" class="text-3xl font-bold text-white">--</p>
+                            </div>
+                            <div class="text-center mt-3">
+                                <p class="text-sm text-gray-400">Predicción Rendimiento</p>
+                                <p id="sim-predicted-yield" class="text-3xl font-bold text-white">--</p>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Gráfico Comparativo -->
+                    <div class="h-56">
+                        <canvas id="simulationChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Insights Accionables -->
+            <div class="mt-6 bg-gray-800 p-6 rounded-2xl shadow-lg">
+                <h3 class="text-xl font-semibold text-white mb-4">Insights de la IA</h3>
+                <div class="space-y-3">
+                    <div class="flex items-start p-4 bg-gray-700 rounded-lg">
+                        <svg class="w-6 h-6 text-emerald-400 mr-3 flex-shrink-0 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                        <p class="text-gray-300">Tu consumo de agua en la <span class="font-bold text-white">Zona 2</span> es un 30% más eficiente que en la <span class="font-bold text-white">Zona 4</span> debido a la diferencia en la composición del suelo.</p>
+                    </div>
+                    <div class="flex items-start p-4 bg-gray-700 rounded-lg">
+                        <svg class="w-6 h-6 text-emerald-400 mr-3 flex-shrink-0 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
+                        <p class="text-gray-300">Se espera un <span class="font-bold text-emerald-400">incremento del 5% en el rendimiento</span> si se corrige la deficiencia de Nitrógeno en la <span class="font-bold text-white">Zona 1</span> en los próximos 7 días.</p>
+                    </div>
+                    <div class="flex items-start p-4 bg-gray-700 rounded-lg">
+                        <svg class="w-6 h-6 text-emerald-400 mr-3 flex-shrink-0 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        <p class="text-gray-300">El riesgo de <em class="italic">Pythium</em> en la <span class="font-bold text-white">Zona 5</span> ha disminuido un 20% tras la última recomendación de aireación.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+    </main>
+
+    <!-- =================================== -->
+    <!-- ===== MODAL: DETALLES DE ZONA ===== -->
+    <!-- =================================== -->
+    <div id="zone-drilldown-modal" class="fixed inset-0 bg-gray-900 bg-opacity-80 backdrop-blur-sm flex items-center justify-center p-4 hidden z-50">
+        <div class="bg-gray-800 w-full max-w-6xl h-full max-h-[90vh] rounded-2xl shadow-2xl flex flex-col">
+            <!-- Encabezado del Modal -->
+            <div class="flex justify-between items-center p-5 border-b border-gray-700">
+                <h3 id="modal-zone-title" class="text-2xl font-bold text-white">Análisis Detallado: Zona </h3>
+                <button id="modal-close-btn" class="text-gray-400 hover:text-white">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            
+            <!-- Contenido del Modal -->
+            <div class="flex-1 overflow-y-auto p-6">
+                <div class="mb-4">
+                    <span class="text-sm text-gray-400 mr-4">Cultivo: <span id="modal-zone-crop" class="font-medium text-gray-200">Tomate Cherry</span></span>
+                    <span class="text-sm text-gray-400 mr-4">Siembra: <span id="modal-zone-date" class="font-medium text-gray-200">15/03/2025</span></span>
+                    <span class="text-sm text-gray-400">Sensores: <span id="modal-zone-sensors" class="font-medium text-gray-200">4</span></span>
+                </div>
+
+                <!-- Grid de Gráficos -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Humedad Profunda -->
+                    <div class="lg:col-span-2 bg-gray-900 p-4 rounded-lg">
+                        <h4 class="text-lg font-semibold text-white mb-3">Humedad Profunda (VWC %)</h4>
+                        <div class="h-64"><canvas id="moistureChart"></canvas></div>
+                    </div>
+                    <!-- pH -->
+                    <div class="bg-gray-900 p-4 rounded-lg">
+                        <h4 class="text-lg font-semibold text-white mb-3">pH Zona Radicular</h4>
+                        <div class="h-64"><canvas id="phChart"></canvas></div>
+                    </div>
+                    <!-- Nutrientes NPK -->
+                    <div class="bg-gray-900 p-4 rounded-lg">
+                        <h4 class="text-lg font-semibold text-white mb-3">Nutrientes (N-P-K)</h4>
+                        <div class="h-64"><canvas id="nutrientsChart"></canvas></div>
+                    </div>
+                    <!-- Oxigenación ORP -->
+                    <div class="bg-gray-900 p-4 rounded-lg">
+                        <h4 class="text-lg font-semibold text-white mb-3">Oxigenación (ORP mV)</h4>
+                        <div class="h-64"><canvas id="orpChart"></canvas></div>
+                    </div>
+                    <!-- Riesgo de Hongos -->
+                    <div class="bg-gray-900 p-4 rounded-lg">
+                        <h4 class="text-lg font-semibold text-white mb-3">Probabilidad de Hongos</h4>
+                        <div class="h-64"><canvas id="fungusChart"></canvas></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- ===== Lógica del Dashboard (JavaScript) ===== -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+
+            // =============================================
+            // ===== ESTADO SIMULADO Y DATOS GLOBALES =====
+            // =============================================
+            
+            // Base de datos simulada de las zonas
+            const zoneDatabase = {
+                "1": { name: "Zona 1", crop: "Tomate Cherry", date: "15/03/2025", sensors: 4, health: 95, moisture: 28, ph: 6.2, fungus: 5 },
+                "2": { name: "Zona 2", crop: "Tomate Cherry", date: "15/03/2025", sensors: 4, health: 90, moisture: 26, ph: 6.4, fungus: 8 },
+                "3": { name: "Zona 3", crop: "Pimiento", date: "20/03/2025", sensors: 3, health: 65, moisture: 18, ph: 6.8, fungus: 15 },
+                "4": { name: "Zona 4", crop: "Tomate Cherry", date: "15/03/2025", sensors: 4, health: 88, moisture: 30, ph: 6.1, fungus: 2 },
+                "5": { name: "Zona 5", crop: "Pimiento", date: "20/03/2025", sensors: 3, health: 92, moisture: 27, ph: 6.3, fungus: 4 },
+                "6": { name: "Zona 6", crop: "Berenjena", date: "22/03/2025", sensors: 2, health: 30, moisture: 45, ph: 5.9, fungus: 75 },
+                "7": { name: "Zona 7", crop: "Berenjena", date: "22/03/2025", sensors: 2, health: 85, moisture: 29, ph: 6.0, fungus: 10 },
+                "8": { name: "Zona 8", crop: "Pimiento", date: "20/03/2025", sensors: 3, health: 91, moisture: 25, ph: 6.2, fungus: 5 },
+            };
+            
+            // Estado global (simulado)
+            let globalState = {
+                stress: 22,
+                yield: 92,
+                savings: 1240,
+                alerts: 2,
+                trendData: Array.from({length: 30}, (_, i) => Math.max(10, Math.min(40, 25 + Math.sin(i / 3) * 10 + (Math.random() - 0.5) * 5))),
+            };
+            
+            let chartInstances = {}; // Almacén para instancias de gráficos (para destruirlos)
+
+            // =============================================
+            // ===== NAVEGACIÓN PRINCIPAL =====
+            // =============================================
+            const navLinks = document.querySelectorAll('.nav-link');
+            const mainSections = document.querySelectorAll('.main-section');
+            const activeLinkClass = 'active-link';
+            const baseLinkClass = 'nav-link';
+            
+            // Estilos de navegación
+            const activeClasses = ['bg-gray-800', 'text-gray-100'];
+            const inactiveClasses = ['text-gray-400', 'hover:bg-gray-800'];
+
+            navLinks.forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const targetId = link.getAttribute('data-target');
+                    
+                    // Ocultar todas las secciones
+                    mainSections.forEach(section => {
+                        section.style.display = 'none';
+                    });
+                    
+                    // Mostrar la sección objetivo
+                    document.getElementById(targetId).style.display = 'block';
+                    
+                    // Actualizar estilos de links
+                    navLinks.forEach(navLink => {
+                        navLink.classList.remove(...activeClasses);
+                        navLink.classList.add(...inactiveClasses);
+                    });
+                    link.classList.add(...activeClasses);
+                    link.classList.remove(...inactiveClasses);
+                });
+            });
+
+            // =============================================
+            // ===== SECCIÓN 1: VISIÓN GENERAL (MAPA Y KPIs) =====
+            // =============================================
+            const mapZones = document.querySelectorAll('.map-zone');
+            const zonePanel = document.getElementById('zone-detail-panel');
+            const zonePanelTitle = document.getElementById('zone-panel-title');
+            const zonePanelContent = document.getElementById('zone-panel-content');
+            const zonePanelPlaceholder = document.getElementById('zone-panel-placeholder');
+            const drilldownBtn = document.getElementById('zone-drilldown-btn');
+            
+            let selectedZoneId = null;
+
+            mapZones.forEach(zone => {
+                zone.addEventListener('click', () => {
+                    selectedZoneId = zone.getAttribute('data-zone-id');
+                    const zoneData = zoneDatabase[selectedZoneId];
+                    
+                    // Quitar borde a todas las zonas
+                    mapZones.forEach(z => z.style.borderWidth = '1px');
+                    // Poner borde a la seleccionada
+                    zone.style.borderWidth = '3px';
+                    zone.style.borderColor = '#34d399';
+                    
+                    // Rellenar panel lateral
+                    zonePanelTitle.textContent = `Resumen: ${zoneData.name}`;
+                    document.getElementById('zone-panel-crop').textContent = zoneData.crop;
+                    document.getElementById('zone-panel-date').textContent = zoneData.date;
+                    
+                    document.getElementById('zone-panel-stress').textContent = `${100 - zoneData.health}`;
+                    document.getElementById('zone-panel-moisture').textContent = `${zoneData.moisture}%`;
+                    document.getElementById('zone-panel-ph').textContent = `${zoneData.ph}`;
+                    document.getElementById('zone-panel-fungus').textContent = `${zoneData.fungus}%`;
+                    
+                    // Asignar clases de color
+                    const stressEl = document.getElementById('zone-panel-stress');
+                    stressEl.className = 'text-lg font-bold ';
+                    if (zoneData.health > 80) stressEl.classList.add('health-green-text');
+                    else if (zoneData.health > 50) stressEl.classList.add('health-yellow-text');
+                    else stressEl.classList.add('health-red-text');
+                    
+                    zonePanelContent.classList.remove('hidden');
+                    zonePanelPlaceholder.classList.add('hidden');
+                });
+            });
+
+            // Botón para abrir el modal de "drill-down"
+            drilldownBtn.addEventListener('click', () => {
+                if (selectedZoneId) {
+                    openDrilldownModal(selectedZoneId);
+                }
+            });
+
+            // Actualizar KPIs globales iniciales
+            function updateGlobalKPIs() {
+                document.getElementById('kpi-stress').textContent = globalState.stress;
+                document.getElementById('kpi-stress-ring').setAttribute('stroke-dasharray', `${globalState.stress}, 100`);
+                
+                document.getElementById('kpi-yield').textContent = `${globalState.yield}%`;
+                document.getElementById('kpi-yield-ring').setAttribute('stroke-dasharray', `${globalState.yield}, 100`);
+
+                document.getElementById('kpi-savings').textContent = `€ ${globalState.savings.toLocaleString('es-ES')}`;
+                document.getElementById('kpi-alerts').textContent = globalState.alerts;
+            }
+            
+            // Simulación de "tiempo real" (actualiza KPIs cada 5s)
+            setInterval(() => {
+                globalState.stress = Math.max(10, Math.min(40, globalState.stress + Math.floor(Math.random() * 3) - 1));
+                globalState.savings += Math.floor(Math.random() * 10);
+                updateGlobalKPIs();
+                
+                // Actualizar gráfico de tendencia global
+                if (chartInstances.globalTrendChart) {
+                    globalState.trendData.shift();
+                    globalState.trendData.push(globalState.stress);
+                    chartInstances.globalTrendChart.data.datasets[0].data = globalState.trendData;
+                    chartInstances.globalTrendChart.update();
+                }
+            }, 5000);
+
+            // =============================================
+            // ===== RENDERIZADO DE GRÁFICOS (Chart.js) =====
+            // =============================================
+            
+            // Función genérica para destruir gráficos
+            function destroyChart(id) {
+                if (chartInstances[id]) {
+                    chartInstances[id].destroy();
+                    delete chartInstances[id];
+                }
+            }
+            
+            // 1. Gráfico de Tendencia Global
+            function createGlobalTrendChart() {
+                destroyChart('globalTrendChart');
+                const ctx = document.getElementById('globalTrendChart').getContext('2d');
+                
+                const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+                gradient.addColorStop(0, 'rgba(245, 158, 11, 0.3)');
+                gradient.addColorStop(1, 'rgba(245, 158, 11, 0)');
+
+                chartInstances.globalTrendChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: Array.from({length: 30}, (_, i) => `${30-i}d`),
+                        datasets: [{
+                            label: 'Estrés Radicular',
+                            data: globalState.trendData,
+                            borderColor: '#f59e0b', // amber-400
+                            backgroundColor: gradient,
+                            borderWidth: 3,
+                            pointRadius: 0,
+                            pointHitRadius: 10,
+                            tension: 0.4, // Líneas suaves
+                            fill: true
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                mode: 'index',
+                                intersect: false,
+                                backgroundColor: '#1F2937',
+                                titleFont: { size: 14, weight: 'bold' },
+                                bodyFont: { size: 12 },
+                            }
+                        },
+                        scales: {
+                            x: { 
+                                grid: { display: false },
+                                ticks: { color: '#6b7280' }
+                            },
+                            y: { 
+                                grid: { color: '#374151' }, // gray-700
+                                ticks: { color: '#6b7280' },
+                                title: { display: true, text: 'Índice de Estrés', color: '#9ca3af' }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // 2. Gráficos del Modal "Drill-down"
+            function createDrilldownCharts(zoneData) {
+                // Destruir gráficos anteriores
+                ['moistureChart', 'phChart', 'nutrientsChart', 'orpChart', 'fungusChart'].forEach(destroyChart);
+                
+                const timeLabels = ['-72h', '-60h', '-48h', '-36h', '-24h', '-12h', 'Ahora'];
+                
+                // Simulación de datos históricos
+                const moistureData = Array.from({length: 6}, () => 25 + Math.random() * 5);
+                moistureData.push(zoneData.moisture);
+                
+                const phData = Array.from({length: 6}, () => 6.3 + Math.random() * 0.4);
+                phData.push(zoneData.ph);
+                
+                const orpData = Array.from({length: 6}, () => (zoneData.health > 50 ? 100 : -20) + Math.random() * 40);
+                orpData.push(zoneData.health > 50 ? (Math.random() * 50 + 100) : (Math.random() * 50 - 50));
+
+                // Umbrales (simulados como datasets)
+                const createThresholdDataset = (value, color, label) => ({
+                    label: label,
+                    data: Array(7).fill(value),
+                    borderColor: color,
+                    borderWidth: 2,
+                    borderDash: [5, 5],
+                    pointRadius: 0,
+                    fill: false
+                });
+                
+                // --- Gráfico de Humedad ---
+                const ctxMoisture = document.getElementById('moistureChart').getContext('2d');
+                chartInstances.moistureChart = new Chart(ctxMoisture, {
+                    type: 'line',
+                    data: {
+                        labels: timeLabels,
+                        datasets: [
+                            createThresholdDataset(35, '#3b82f6', 'Encharcamiento'), // Azul
+                            createThresholdDataset(22, '#22c55e', 'Óptimo'), // Verde
+                            createThresholdDataset(15, '#ef4444', 'Estrés Hídrico'), // Rojo
+                            {
+                                label: 'VWC %',
+                                data: moistureData,
+                                borderColor: '#34d399',
+                                borderWidth: 3,
+                                tension: 0.3,
+                                fill: true,
+                                backgroundColor: 'rgba(52, 211, 153, 0.1)'
+                            }
+                        ]
+                    },
+                    options: getChartOptions('VWC %', false)
+                });
+                
+                // --- Gráfico de pH ---
+                const ctxPh = document.getElementById('phChart').getContext('2d');
+                chartInstances.phChart = new Chart(ctxPh, {
+                    type: 'line',
+                    data: {
+                        labels: timeLabels,
+                        datasets: [
+                            createThresholdDataset(7.0, '#f59e0b', 'Alcalino'), // Ambar
+                            createThresholdDataset(5.8, '#22c55e', 'Ideal'), // Verde
+                            {
+                                label: 'Nivel de pH',
+                                data: phData,
+                                borderColor: '#eab308',
+                                borderWidth: 3,
+                                tension: 0.3,
+                                fill: false
+                            }
+                        ]
+                    },
+                    options: getChartOptions('pH', false)
+                });
+
+                // --- Gráfico de Nutrientes (Barra) ---
+                const ctxNutrients = document.getElementById('nutrientsChart').getContext('2d');
+                chartInstances.nutrientsChart = new Chart(ctxNutrients, {
+                    type: 'bar',
+                    data: {
+                        labels: ['Nitrógeno (N)', 'Fósforo (P)', 'Potasio (K)'],
+                        datasets: [{
+                            label: 'Nivel Actual',
+                            data: [
+                                zoneData.health > 50 ? 80 : 40, 
+                                65 + Math.random() * 10, 
+                                75 + Math.random() * 10
+                            ],
+                            backgroundColor: ['#34d399', '#3b82f6', '#f59e0b'],
+                            borderRadius: 4
+                        },
+                        {
+                            label: 'Óptimo',
+                            data: [80, 70, 80],
+                            type: 'line',
+                            borderColor: '#9ca3af',
+                            borderDash: [5, 5],
+                            pointRadius: 0,
+                            fill: false
+                        }]
+                    },
+                    options: getChartOptions('Nivel', true, 100) // Eje Y hasta 100
+                });
+
+                // --- Gráfico de ORP ---
+                const ctxOrp = document.getElementById('orpChart').getContext('2d');
+                chartInstances.orpOrp = new Chart(ctxOrp, {
+                    type: 'line',
+                    data: {
+                        labels: timeLabels,
+                        datasets: [
+                            createThresholdDataset(50, '#22c55e', 'Óptimo'), // Verde
+                            createThresholdDataset(0, '#ef4444', 'Anaeróbico'), // Rojo
+                            {
+                                label: 'ORP (mV)',
+                                data: orpData,
+                                borderColor: '#a78bfa',
+                                borderWidth: 3,
+                                tension: 0.3,
+                                fill: false
+                            }
+                        ]
+                    },
+                    options: getChartOptions('mV', false)
+                });
+                
+                // --- Gráfico de Hongos (Barra) ---
+                const ctxFungus = document.getElementById('fungusChart').getContext('2d');
+                chartInstances.fungusChart = new Chart(ctxFungus, {
+                    type: 'bar',
+                    data: {
+                        labels: ['Fusarium', 'Pythium', 'Verticillium'],
+                        datasets: [{
+                            label: 'Probabilidad (%)',
+                            data: [
+                                zoneData.fungus, 
+                                Math.max(0, zoneData.fungus - 30 + Math.random() * 10), 
+                                10 + Math.random() * 5
+                            ],
+                            backgroundColor: ['#ef4444', '#f59e0b', '#8b5cf6'],
+                            borderRadius: 4
+                        }]
+                    },
+                    options: getChartOptions('% Probabilidad', true, 100)
+                });
+            }
+
+            // Opciones genéricas para gráficos del modal
+            function getChartOptions(yLabel, isBar = false, yMax = null) {
+                return {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { labels: { color: '#9ca3af' } }
+                    },
+                    scales: {
+                        x: { 
+                            grid: { display: isBar },
+                            ticks: { color: '#6b7280' }
+                        },
+                        y: { 
+                            grid: { color: '#374151' }, 
+                            ticks: { color: '#6b7280' },
+                            title: { display: true, text: yLabel, color: '#9ca3af' },
+                            max: yMax
+                        }
+                    }
+                };
+            }
+
+            // =============================================
+            // ===== LÓGICA DEL MODAL "DRILL-DOWN" =====
+            // =============================================
+            const modal = document.getElementById('zone-drilldown-modal');
+            const modalCloseBtn = document.getElementById('modal-close-btn');
+
+            function openDrilldownModal(zoneId) {
+                const zoneData = zoneDatabase[zoneId];
+                
+                // Rellenar info
+                document.getElementById('modal-zone-title').textContent = `Análisis Detallado: ${zoneData.name}`;
+                document.getElementById('modal-zone-crop').textContent = zoneData.crop;
+                document.getElementById('modal-zone-date').textContent = zoneData.date;
+                document.getElementById('modal-zone-sensors').textContent = zoneData.sensors;
+
+                // Crear gráficos
+                createDrilldownCharts(zoneData);
+
+                // Mostrar modal
+                modal.classList.remove('hidden');
+            }
+
+            modalCloseBtn.addEventListener('click', () => {
+                modal.classList.add('hidden');
+                // Destruir gráficos al cerrar para liberar memoria
+                ['moistureChart', 'phChart', 'nutrientsChart', 'orpChart', 'fungusChart'].forEach(destroyChart);
+            });
+
+            // =============================================
+            // ===== SECCIÓN 3: SIMULACIÓN =====
+            // =============================================
+            const simIrrigation = document.getElementById('sim-irrigation');
+            const simFertilizer = document.getElementById('sim-fertilizer');
+            const simIrrigationValue = document.getElementById('sim-irrigation-value');
+            const simFertilizerValue = document.getElementById('sim-fertilizer-value');
+            const runSimBtn = document.getElementById('run-simulation-btn');
+
+            // Actualizar etiquetas de sliders
+            simIrrigation.addEventListener('input', (e) => simIrrigationValue.textContent = e.target.value);
+            simFertilizer.addEventListener('input', (e) => simFertilizerValue.textContent = e.target.value);
+
+            // "Motor" de simulación
+            runSimBtn.addEventListener('click', () => {
+                const irrigationChange = parseInt(simIrrigation.value);
+                const fertilizerChange = parseInt(simFertilizer.value);
+                
+                // Modelo de IA simulado (reglas simples)
+                // 1. Más riego reduce el estrés hídrico
+                let stressImpact = (irrigationChange * -0.3); // +20% riego -> -6 estrés
+                // 2. Más fertilizante reduce el estrés nutricional (mejora rendimiento)
+                let yieldImpact = (fertilizerChange * 0.1); // +20% fert -> +2% rendimiento
+                // 3. Más riego también aumenta el rendimiento (si había estrés)
+                if (globalState.stress > 20 && irrigationChange > 0) {
+                    yieldImpact += (irrigationChange * 0.15); // +20% riego -> +3% rendimiento
+                }
+                // 4. Demasiado riego es malo
+                if (irrigationChange > 30) {
+                    yieldImpact -= (irrigationChange - 30) * 0.2; // Riego +40% -> -2% rendimiento
+                }
+
+                const currentStress = globalState.stress;
+                const currentYield = globalState.yield;
+                
+                const predictedStress = Math.max(0, Math.min(100, Math.round(currentStress + stressImpact)));
+                const predictedYield = Math.max(0, Math.min(100, Math.round(currentYield + yieldImpact)));
+                
+                // Actualizar tarjetas de predicción
+                const stressPredEl = document.getElementById('sim-predicted-stress');
+                const yieldPredEl = document.getElementById('sim-predicted-yield');
+                
+                stressPredEl.textContent = predictedStress;
+                yieldPredEl.textContent = `${predictedYield}%`;
+                
+                // Colorear resultados
+                stressPredEl.className = 'text-3xl font-bold ';
+                if (predictedStress < currentStress) stressPredEl.classList.add('health-green-text');
+                else if (predictedStress > currentStress) stressPredEl.classList.add('health-red-text');
+                else stressPredEl.classList.add('text-white');
+                
+                yieldPredEl.className = 'text-3xl font-bold ';
+                if (predictedYield > currentYield) yieldPredEl.classList.add('health-green-text');
+                else if (predictedYield < currentYield) yieldPredEl.classList.add('health-red-text');
+                else yieldPredEl.classList.add('text-white');
+
+                // Actualizar gráfico comparativo
+                updateSimulationChart(currentStress, predictedStress, currentYield, predictedYield);
+            });
+
+            // Gráfico de simulación
+            function updateSimulationChart(cs, ps, cy, py) {
+                destroyChart('simulationChart');
+                const ctx = document.getElementById('simulationChart').getContext('2d');
+                chartInstances.simulationChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['Índice de Estrés', 'Pred. Rendimiento'],
+                        datasets: [
+                            {
+                                label: 'Actual',
+                                data: [cs, cy],
+                                backgroundColor: '#6b7280', // gray-500
+                                borderRadius: 4
+                            },
+                            {
+                                label: 'Simulado',
+                                data: [ps, py],
+                                backgroundColor: '#34d399', // emerald-400
+                                borderRadius: 4
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { labels: { color: '#9ca3af' } }
+                        },
+                        scales: {
+                            x: { grid: { display: false }, ticks: { color: '#9ca3af' } },
+                            y: { 
+                                grid: { color: '#374151' }, 
+                                ticks: { color: '#6b7280' },
+                                title: { display: true, text: 'Valor (0-100)', color: '#9ca3af' },
+                                max: 100
+                            }
+                        }
+                    }
+                });
+            }
+
+            // =============================================
+            // ===== INICIALIZACIÓN =====
+            // =============================================
+            updateGlobalKPIs();
+            createGlobalTrendChart();
+            // Llenar tarjetas de simulación iniciales
+            document.getElementById('sim-current-stress').textContent = globalState.stress;
+            document.getElementById('sim-current-yield').textContent = `${globalState.yield}%`;
+            updateSimulationChart(globalState.stress, globalState.stress, globalState.yield, globalState.yield); // Inicia con valores iguales
+        });
+    </script>
+</body>
+</html>
